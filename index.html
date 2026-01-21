@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlowerBoss CRM</title>
+    <!-- Подключение PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <meta name="theme-color" content="#1e1e1e">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    
+    <style>
+        /* --- СТИЛИ --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #4CAF50; /* Зеленый */
+            --danger: #ff5252; /* Красный */
+            --accent: #2979FF; /* Синий */
+            --warning: #FFC107; /* Желтый */
+            --text-main: #ffffff;
+            --text-sec: #b0b0b0;
+            --input-bg: #2c2c2c;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 90px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Шапка */
+        .header {
+            padding: 15px 20px;
+            background: var(--card-bg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { margin: 0; font-size: 20px; font-weight: 700; }
+
+        .container { padding: 15px; }
+
+        /* Кнопки */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-danger { background: var(--danger); }
+        .btn-accent { background: var(--accent); }
+        .btn-small { width: auto; padding: 8px 12px; font-size: 14px; border-radius: 8px; }
+        .btn-icon { width: 35px; height: 35px; padding: 0; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; border: none; color: white; cursor: pointer; }
+
+        /* Поля ввода */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; color: var(--text-sec); margin-bottom: 6px; font-size: 13px; }
+        input, select, textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid #333;
+            color: white;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+        }
+        input:focus { border-color: var(--primary); }
+
+        /* Карточка */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .card-row { display: flex; justify-content: space-between; align-items: center; }
+        .item-info h3 { margin: 0 0 4px 0; font-size: 16px; }
+        .item-info p { margin: 0; font-size: 13px; color: var(--text-sec); }
+        .item-actions { display: flex; align-items: center; gap: 8px; }
+
+        /* Статусы заказа */
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .status-new { background: var(--accent); color: white; }
+        .status-ready { background: var(--warning); color: black; }
+        .status-done { background: var(--primary); color: white; }
+
+        /* Итоговая плашка */
+        .total-bar {
+            background: #252525;
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #bbb; }
+        .total-main { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; font-size: 18px; font-weight: bold; color: white; }
+        .profit { color: var(--primary); }
+
+        /* Нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #333;
+            z-index: 900;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
+        }
+        .nav-item { background: none; border: none; color: #666; text-align: center; font-size: 10px; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 3px; }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            align-items: flex-end; justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: #1e1e1e; width: 100%; max-width: 500px;
+            padding: 25px 20px; border-radius: 20px 20px 0 0;
+            animation: slideUp 0.3s; box-sizing: border-box;
+            max-height: 85vh; overflow-y: auto;
+        }
+        @media(min-width: 600px) { .modal-content { border-radius: 20px; margin-bottom: auto; margin-top: 80px; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .counter { display: flex; align-items: center; gap: 10px; background: #2c2c2c; padding: 5px; border-radius: 8px; }
+        .counter span { width: 20px; text-align: center; font-weight: bold; }
+
+        .view { display: none; }
+        .view.active { display: block; }
+        .empty-state { text-align: center; color: #555; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+    <!-- ШАПКА -->
+    <div class="header">
+        <h1 id="page-title">Склад</h1>
+        <button class="btn btn-small" id="header-btn" onclick="handleHeaderBtn()">+ Товар</button>
+    </div>
+
+    <div class="container">
+        
+        <!-- 1. СКЛАД -->
+        <div id="view-warehouse" class="view active">
+            <div class="input-group">
+                <input type="text" id="search-warehouse" placeholder="🔍 Поиск..." oninput="renderWarehouse()">
+            </div>
+            <div id="warehouse-list"></div>
+        </div>
+
+        <!-- 2. СБОРКА БУКЕТА -->
+        <div id="view-calc" class="view">
+            <div id="bouquet-list">
+                <div class="empty-state">Букет пуст. Добавьте цветы!</div>
+            </div>
+
+            <!-- ИТОГИ -->
+            <div class="total-bar" id="calc-total" style="display:none;">
+                <div class="total-row"><span>Себестоимость:</span> <span id="total-cost">0 ₽</span></div>
+                <div class="total-main"><span>Итого клиенту:</span> <span id="total-price" style="color:var(--accent)">0 ₽</span></div>
+                <div class="total-row" style="margin-top:5px; color:#4CAF50"><span>Прибыль:</span> <span id="total-profit">0 ₽</span></div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn" onclick="openAddFlowerModal()">+ Добавить в букет</button>
+                <button class="btn btn-danger" onclick="clearBouquet()" style="width: auto;">🗑</button>
+            </div>
+            <button class="btn btn-accent" id="btn-checkout" style="margin-top:10px; display:none;" onclick="openCheckoutModal()">✅ Оформить заказ</button>
+        </div>
+
+        <!-- 3. ЗАКАЗЫ -->
+        <div id="view-orders" class="view">
+            <div id="orders-list">
+                <div class="empty-state">Нет активных заказов</div>
+            </div>
+        </div>
+
+        <!-- 4. КЛИЕНТЫ -->
+        <div id="view-clients" class="view">
+            <div class="input-group">
+                <input type="text" id="search-clients" placeholder="🔍 Поиск клиента..." oninput="renderClients()">
+            </div>
+            <div id="clients-list">
+                <div class="empty-state">База пуста</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МЕНЮ -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('warehouse')"><span class="nav-icon">📦</span>Склад</button>
+        <button class="nav-item" onclick="switchTab('calc')"><span class="nav-icon">🌸</span>Сборка</button>
+        <button class="nav-item" onclick="switchTab('orders')"><span class="nav-icon">📋</span>Заказы</button>
+        <button class="nav-item" onclick="switchTab('clients')"><span class="nav-icon">👥</span>Клиенты</button>
+    </div>
+
+    <!-- МОДАЛКА: ТОВАР (СКЛАД) -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <h2 style="margin-top:0;">Товар</h2>
+            <input type="hidden" id="item-id">
+            <div class="input-group"><label>Название</label><input type="text" id="item-name"></div>
+            <div style="display:flex; gap:10px;">
+                <div class="input-group" style="flex:1"><label>Закуп (₽)</label><input type="number" id="item-cost"></div>
+                <div class="input-group" style="flex:1"><label>Продажа (₽)</label><input type="number" id="item-price"></div>
+            </div>
+            <div class="input-group"><label>Остаток</label><input type="number" id="item-qty"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn" onclick="saveItem()">Сохранить</button>
+                <button class="btn btn-danger" onclick="closeModal('itemModal')">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: СПИСАНИЕ (БРАК) -->
+    <div class="modal" id="writeOffModal">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color:var(--danger)">📉 Списание</h2>
+            <p id="writeoff-item-name" style="color:#888; margin-bottom:15px;"></p>
+            <input type="hidden" id="writeoff-item-id">
+            
+            <div class="input-group">
+                <label>Сколько штук списать?</label>
+                <input type="number" id="writeoff-qty" placeholder="1" value="1">
+            </div>
+            <div class="input-group">
+                <label>Причина</label>
+                <select id="writeoff-reason">
+                    <option value="Завял">🥀 Завял / Брак</option>
+                    <option value="Сломали">💔 Сломали</option>
+                    <option value="Подарок">🎁 Подарок / Реклама</option>
+                    <option value="Ревизия">🔍 Ошибка ревизии</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-danger" onclick="confirmWriteOff()">Списать</button>
+                <button class="btn" style="background:#444" onclick="closeModal('writeOffModal')">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ВЫБОР ЦВЕТКА -->
+    <div class="modal" id="selectFlowerModal">
+        <div class="modal-content">
+            <h2 style="margin-top:0;">Добавить</h2>
+            <div class="input-group">
+                <input type="text" id="search-picker" placeholder="Найти цветок..." oninput="renderFlowerPicker()">
+            </div>
+            <div id="flower-picker-list" style="max-height: 350px; overflow-y: auto;"></div>
+            <button class="btn btn-danger" style="margin-top:15px;" onclick="closeModal('selectFlowerModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ОФОРМЛЕНИЕ ЗАКАЗА -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <h2 style="margin-top:0;">Новый заказ</h2>
+            <div class="input-group">
+                <label>Имя клиента</label>
+                <input type="text" id="client-name" placeholder="Иван">
+            </div>
+            <div class="input-group">
+                <label>Телефон</label>
+                <input type="tel" id="client-phone" placeholder="+7 900...">
+            </div>
+            <div class="input-group">
+                <label>Дата и время выдачи</label>
+                <input type="datetime-local" id="order-date">
+            </div>
+            <div class="input-group">
+                <label>Комментарий (Адрес)</label>
+                <textarea id="order-comment" rows="3" style="width:100%; background:#2c2c2c; color:white; border:1px solid #333; padding:10px; border-radius:10px;"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-accent" onclick="confirmOrder()">Подтвердить</button>
+                <button class="btn btn-danger" onclick="closeModal('checkoutModal')">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ДАННЫЕ ---
+        let warehouseData = JSON.parse(localStorage.getItem('flowerData')) || [];
+        let ordersData = JSON.parse(localStorage.getItem('flowerOrders')) || [];
+        let clientsData = JSON.parse(localStorage.getItem('flowerClients')) || [];
+        
+        let currentBouquet = []; // Корзина
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        renderWarehouse();
+        renderOrders();
+        renderClients();
+
+        // --- НАВИГАЦИЯ ---
+        function switchTab(tab) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + tab).classList.add('active');
+            
+            const titles = { 'warehouse': 'Склад', 'calc': 'Сборка', 'orders': 'Заказы', 'clients': 'Клиенты' };
+            document.getElementById('page-title').innerText = titles[tab];
+            
+            const btn = document.getElementById('header-btn');
+            if (tab === 'warehouse') {
+                btn.style.display = 'block';
+                btn.innerText = '+ Товар';
+                btn.onclick = () => openModal('itemModal');
+            } else {
+                btn.style.display = 'none';
+            }
+
+            const tabs = ['warehouse', 'calc', 'orders', 'clients'];
+            document.querySelectorAll('.nav-item')[tabs.indexOf(tab)].classList.add('active');
+
+            if (tab === 'calc') renderBouquet();
+            if (tab === 'orders') renderOrders();
+            if (tab === 'clients') renderClients();
+        }
+
+        // --- СКЛАД ---
+        function renderWarehouse() {
+            const list = document.getElementById('warehouse-list');
+            const search = document.getElementById('search-warehouse').value.toLowerCase();
+            list.innerHTML = '';
+            const filtered = warehouseData.filter(item => item.name.toLowerCase().includes(search));
+
+            if (filtered.length === 0) return list.innerHTML = '<div class="empty-state">Пусто</div>';
+
+            filtered.slice().reverse().forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                // Кнопка списания добавлена (стрелка вниз 📉)
+                el.innerHTML = `
+                    <div class="item-info">
+                        <h3>${item.name}</h3>
+                        <p>Закуп: ${item.cost} | Прод: <span style="color:var(--primary)">${item.price}</span></p>
+                    </div>
+                    <div class="item-actions">
+                        <div class="badge">${item.qty}</div>
+                        <button class="btn-icon" style="background:#2c2c2c; color:#ff5252;" onclick="openWriteOff(${item.id})" title="Списать">📉</button>
+                        <button class="btn-icon" style="background:#333;" onclick="editItem(${item.id})">✎</button>
+                        <button class="btn-icon btn-danger" onclick="deleteItem(${item.id})">×</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function saveItem() {
+            const id = document.getElementById('item-id').value;
+            const item = {
+                id: id ? Number(id) : Date.now(),
+                name: document.getElementById('item-name').value.trim(),
+                cost: Number(document.getElementById('item-cost').value),
+                price: Number(document.getElementById('item-price').value),
+                qty: Number(document.getElementById('item-qty').value)
+            };
+            if (!item.name) return alert('Введите название!');
+
+            if (id) {
+                const idx = warehouseData.findIndex(x => x.id == id);
+                warehouseData[idx] = item;
+            } else {
+                warehouseData.push(item);
+            }
+            localStorage.setItem('flowerData', JSON.stringify(warehouseData));
+            closeModal('itemModal');
+            renderWarehouse();
+        }
+
+        function editItem(id) {
+            const item = warehouseData.find(x => x.id == id);
+            document.getElementById('item-id').value = item.id;
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-cost').value = item.cost;
+            document.getElementById('item-price').value = item.price;
+            document.getElementById('item-qty').value = item.qty;
+            openModal('itemModal');
+        }
+
+        function deleteItem(id) {
+            if(confirm('Удалить товар полностью?')) {
+                warehouseData = warehouseData.filter(x => x.id != id);
+                localStorage.setItem('flowerData', JSON.stringify(warehouseData));
+                renderWarehouse();
+            }
+        }
+
+        // --- ЛОГИКА СПИСАНИЯ ---
+        function openWriteOff(id) {
+            const item = warehouseData.find(x => x.id == id);
+            document.getElementById('writeoff-item-id').value = id;
+            document.getElementById('writeoff-item-name').innerText = `Списываем: ${item.name} (Доступно: ${item.qty})`;
+            document.getElementById('writeoff-qty').value = 1;
+            openModal('writeOffModal');
+        }
+
+        function confirmWriteOff() {
+            const id = Number(document.getElementById('writeoff-item-id').value);
+            const qty = Number(document.getElementById('writeoff-qty').value);
+            const reason = document.getElementById('writeoff-reason').value;
+
+            if (qty <= 0) return alert('Количество должно быть больше 0');
+
+            const index = warehouseData.findIndex(x => x.id == id);
+            if (index !== -1) {
+                if(warehouseData[index].qty < qty) return alert('На складе нет столько товара!');
+                
+                warehouseData[index].qty -= qty;
+                localStorage.setItem('flowerData', JSON.stringify(warehouseData));
+                
+                // Можно добавить лог списаний в будущем, пока просто уменьшаем сток
+                alert(`Списано: ${qty} шт. Причина: ${reason}`);
+            }
+            
+            closeModal('writeOffModal');
+            renderWarehouse();
+        }
+
+        // --- СБОРКА (КАЛЬКУЛЯТОР) ---
+        function openAddFlowerModal() {
+            document.getElementById('search-picker').value = '';
+            openModal('selectFlowerModal');
+            renderFlowerPicker();
+        }
+
+        function renderFlowerPicker() {
+            const list = document.getElementById('flower-picker-list');
+            const search = document.getElementById('search-picker').value.toLowerCase();
+            list.innerHTML = '';
+            const filtered = warehouseData.filter(item => item.name.toLowerCase().includes(search));
+
+            if(filtered.length === 0) { list.innerHTML = '<div style="text-align:center; color:#555">Пусто</div>'; return; }
+
+            filtered.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.style.marginBottom = '8px';
+                const stockColor = item.qty > 0 ? '#888' : '#ff5252';
+                
+                el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${item.name}</b> 
+                            <div style="font-size:12px; color:${stockColor}">На складе: ${item.qty}</div>
+                            <div style="font-size:12px; color:#888">${item.price}₽</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+                        <input type="number" id="qty-picker-${item.id}" value="1" min="1" style="width:60px; padding:8px; height:35px; border-radius:5px;">
+                        <button class="btn-small" onclick="addToBouquet(${item.id})">+ Добавить</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function addToBouquet(id) {
+            const item = warehouseData.find(x => x.id == id);
+            const qtyInput = document.getElementById(`qty-picker-${id}`);
+            const qtyToAdd = Number(qtyInput.value) || 1;
+
+            if(item.qty < qtyToAdd) {
+                if(!confirm(`На складе всего ${item.qty}, а вы добавляете ${qtyToAdd}. Продолжить?`)) return;
+            }
+            
+            const existing = currentBouquet.find(x => x.id == id);
+            if (existing) { existing.qty += qtyToAdd; } 
+            else { currentBouquet.push({ ...item, qty: qtyToAdd }); }
+            
+            closeModal('selectFlowerModal');
+            renderBouquet();
+        }
+
+        function renderBouquet() {
+            const list = document.getElementById('bouquet-list');
+            const totalBar = document.getElementById('calc-total');
+            const checkoutBtn = document.getElementById('btn-checkout');
+            list.innerHTML = '';
+
+            if (currentBouquet.length === 0) {
+                list.innerHTML = '<div class="empty-state">Букет пуст</div>';
+                totalBar.style.display = 'none';
+                checkoutBtn.style.display = 'none';
+                return;
+            }
+
+            totalBar.style.display = 'block';
+            checkoutBtn.style.display = 'flex';
+            let totalCost = 0, totalPrice = 0;
+
+            currentBouquet.forEach((item, index) => {
+                totalCost += item.cost * item.qty;
+                totalPrice += item.price * item.qty;
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.innerHTML = `
+                    <div class="item-info"><h3>${item.name}</h3><p>${item.price} ₽ x ${item.qty} = <span style="color:white">${item.price * item.qty} ₽</span></p></div>
+                    <div class="counter">
+                        <button class="btn-icon" style="width:25px; height:25px; background:#444;" onclick="changeBouquetQty(${index}, -1)">-</button>
+                        <span>${item.qty}</span>
+                        <button class="btn-icon" style="width:25px; height:25px; background:#444;" onclick="changeBouquetQty(${index}, 1)">+</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+
+            document.getElementById('total-cost').innerText = totalCost + ' ₽';
+            document.getElementById('total-price').innerText = totalPrice + ' ₽';
+            const profit = totalPrice - totalCost;
+            document.getElementById('total-profit').innerText = (profit > 0 ? '+' : '') + profit + ' ₽';
+            document.getElementById('total-profit').style.color = profit >= 0 ? '#4CAF50' : '#ff5252';
+        }
+
+        function changeBouquetQty(index, delta) {
+            currentBouquet[index].qty += delta;
+            if (currentBouquet[index].qty <= 0) currentBouquet.splice(index, 1);
+            renderBouquet();
+        }
+
+        function clearBouquet() {
+            if(confirm('Очистить?')) { currentBouquet = []; renderBouquet(); }
+        }
+
+        // --- ОФОРМЛЕНИЕ ЗАКАЗА ---
+        function openCheckoutModal() {
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            const dateStr = now.toISOString().slice(0, 16);
+            document.getElementById('order-date').value = dateStr;
+            openModal('checkoutModal');
+        }
+
+        function confirmOrder() {
+            const name = document.getElementById('client-name').value.trim();
+            const phone = document.getElementById('client-phone').value.trim();
+            const date = document.getElementById('order-date').value;
+            const comment = document.getElementById('order-comment').value;
+
+            if (!name) return alert('Введите имя клиента!');
+
+            let cost = 0, price = 0;
+            currentBouquet.forEach(i => { cost += i.cost * i.qty; price += i.price * i.qty; });
+
+            const order = {
+                id: Date.now(),
+                client: name,
+                phone: phone,
+                date: date,
+                comment: comment,
+                items: currentBouquet,
+                total: price,
+                cost: cost,
+                profit: price - cost,
+                status: 'new',
+                createdAt: new Date().toISOString()
+            };
+
+            const existingClient = clientsData.find(c => c.phone === phone && phone !== '');
+            if (!existingClient) {
+                clientsData.push({ id: Date.now(), name, phone, ordersCount: 1, lastOrder: date });
+            } else {
+                existingClient.ordersCount++;
+                existingClient.lastOrder = date;
+            }
+            localStorage.setItem('flowerClients', JSON.stringify(clientsData));
+
+            currentBouquet.forEach(bItem => {
+                const wItem = warehouseData.find(w => w.id === bItem.id);
+                if (wItem) wItem.qty -= bItem.qty;
+            });
+            localStorage.setItem('flowerData', JSON.stringify(warehouseData));
+
+            ordersData.push(order);
+            localStorage.setItem('flowerOrders', JSON.stringify(ordersData));
+
+            currentBouquet = [];
+            document.getElementById('client-name').value = '';
+            document.getElementById('client-phone').value = '';
+            document.getElementById('order-comment').value = '';
+            closeModal('checkoutModal');
+            
+            renderWarehouse();
+            renderClients();
+            switchTab('orders');
+        }
+
+        // --- ЗАКАЗЫ ---
+        function renderOrders() {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = '';
+            if (ordersData.length === 0) return list.innerHTML = '<div class="empty-state">Нет заказов</div>';
+
+            const statusNames = { 'new': 'Новый', 'ready': 'Готов', 'done': 'Выдан' };
+            const statusClasses = { 'new': 'status-new', 'ready': 'status-ready', 'done': 'status-done' };
+
+            ordersData.slice().reverse().forEach(order => {
+                const d = new Date(order.date);
+                const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString().slice(0,5);
+
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.innerHTML = `
+                    <div class="card-row">
+                        <div>
+                            <span class="status-badge ${statusClasses[order.status]}">${statusNames[order.status]}</span>
+                            <span style="font-size:12px; color:#888; margin-left:10px;">#${order.id.toString().slice(-4)}</span>
+                        </div>
+                        <b style="font-size:18px;">${order.total} ₽</b>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <h3 style="margin:0;">${order.client}</h3>
+                        <p style="color:#888; font-size:13px;">📅 ${dateStr}</p>
+                        <p style="color:#aaa; font-size:13px; margin-top:5px;">${order.comment || ''}</p>
+                        <div style="font-size:12px; color:#666; margin-top:5px;">Прибыль: ${order.profit} ₽</div>
+                    </div>
+                    <div class="card-row" style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+                        <button class="btn-small" style="background:#333;" onclick="toggleStatus(${order.id})">Статус ➡️</button>
+                        <button class="btn-small btn-danger" onclick="deleteOrder(${order.id})">Удалить</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function toggleStatus(id) {
+            const order = ordersData.find(o => o.id == id);
+            if(order.status === 'new') order.status = 'ready';
+            else if(order.status === 'ready') order.status = 'done';
+            else return;
+            localStorage.setItem('flowerOrders', JSON.stringify(ordersData));
+            renderOrders();
+        }
+
+        function deleteOrder(id) {
+            if(confirm('Удалить заказ?')) {
+                ordersData = ordersData.filter(o => o.id != id);
+                localStorage.setItem('flowerOrders', JSON.stringify(ordersData));
+                renderOrders();
+            }
+        }
+
+        // --- КЛИЕНТЫ ---
+        function renderClients() {
+            const list = document.getElementById('clients-list');
+            const search = document.getElementById('search-clients').value.toLowerCase();
+            list.innerHTML = '';
+            
+            const filtered = clientsData.filter(c => c.name.toLowerCase().includes(search) || (c.phone && c.phone.includes(search)));
+            if (filtered.length === 0) return list.innerHTML = '<div class="empty-state">Пусто</div>';
+
+            filtered.slice().reverse().forEach(client => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.innerHTML = `
+                    <div class="item-info">
+                        <h3>${client.name}</h3>
+                        <p>${client.phone || 'Без телефона'}</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="badge" style="background:#2c2c2c;">Заказов: ${client.ordersCount}</div>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        // --- УТИЛИТЫ ---
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            if(id === 'itemModal' && !document.getElementById('item-id').value) {
+                document.getElementById('item-name').value = '';
+                document.getElementById('item-cost').value = '';
+                document.getElementById('item-price').value = '';
+                document.getElementById('item-qty').value = '';
+            }
+        }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); if(id === 'itemModal') document.getElementById('item-id').value = ''; }
+
+    </script>
+</body>
+</html>
